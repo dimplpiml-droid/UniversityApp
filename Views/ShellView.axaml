@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UniversityApp.Views.ShellView">
+  <DockPanel>
+    <Border DockPanel.Dock="Top" Background="#B2010101" Padding="10,6">
+      <DockPanel>
+        <Button DockPanel.Dock="Right" Content="Выйти" Command="{Binding LogoutCommand}" />
+        <TextBlock Text="{Binding UserInfo}" VerticalAlignment="Center" />
+      </DockPanel>
+    </Border>
+
+    <ListBox DockPanel.Dock="Left" Width="180"
+             ItemsSource="{Binding Pages}"
+             SelectedItem="{Binding SelectedPage}">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Title}" />
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <ContentControl Content="{Binding SelectedPage}" />
+  </DockPanel>
+</UserControl>

@@ -1,0 +1,8 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="UniversityApp.Views.MainWindow"
+        Title="Университет"
+        Width="1000" Height="650"
+        WindowStartupLocation="CenterScreen">
+  <ContentControl Content="{Binding Current}" />
+</Window>
