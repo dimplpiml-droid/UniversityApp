@@ -88,5 +88,3 @@ public static class Fields
         return d;
     }
 }
-
-public record ColumnDef(string Header, string Path);

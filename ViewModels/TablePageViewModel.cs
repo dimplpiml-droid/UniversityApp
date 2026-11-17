@@ -21,7 +21,6 @@ public abstract partial class TablePageViewModel : ViewModelBase
     public bool CanAdd { get; }
     public bool CanEdit { get; }
     public bool CanDelete { get; }
-    public List<ColumnDef> Columns { get; }
     public List<string> SortOptions { get; }
     public ObservableCollection<object> Items { get; } = new();
 
@@ -32,24 +31,25 @@ public abstract partial class TablePageViewModel : ViewModelBase
     [ObservableProperty] private string _status = "";
 
     protected TablePageViewModel(string title, bool canAdd, bool canEdit, bool canDelete,
-        List<ColumnDef> columns, Dictionary<string, Func<object, object>> sorts)
+        Dictionary<string, Func<object, object>> sorts)
     {
         Title = title;
         CanAdd = canAdd;
         CanEdit = canEdit;
         CanDelete = canDelete;
-        Columns = columns;
         _sorts = sorts;
         SortOptions = sorts.Keys.ToList();
         SelectedSort = SortOptions.FirstOrDefault();
     }
 
+    // ---- то, что реализует конкретная страница ----
     protected abstract IEnumerable<object> LoadAll();
     protected abstract string SearchString(object item);
     protected abstract List<Field> BuildFields(object? item);
     protected abstract void Save(object? item, List<Field> fields);
     protected abstract void DeleteItem(object item);
 
+    // ---- загрузка / фильтр / сортировка ----
     public void Reload()
     {
         try
@@ -86,6 +86,7 @@ public abstract partial class TablePageViewModel : ViewModelBase
         Status = _loadError ?? $"Записей: {Items.Count}";
     }
 
+    // ---- команды ----
     [RelayCommand]
     private async Task Add()
     {
@@ -158,8 +159,8 @@ public abstract partial class TablePageViewModel : ViewModelBase
 public abstract class TablePageViewModel<T> : TablePageViewModel where T : class
 {
     protected TablePageViewModel(string title, bool canAdd, bool canEdit, bool canDelete,
-        List<ColumnDef> columns, Dictionary<string, Func<T, object>> sorts)
-        : base(title, canAdd, canEdit, canDelete, columns, ConvertSorts(sorts))
+        Dictionary<string, Func<T, object>> sorts)
+        : base(title, canAdd, canEdit, canDelete, ConvertSorts(sorts))
     {
     }
 

@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="UniversityApp.Views.ShellView">
   <DockPanel>
-    <Border DockPanel.Dock="Top" Background="#B2010101" Padding="10,6">
+    <Border DockPanel.Dock="Top" Background="#EEEEEE" Padding="10,6">
       <DockPanel>
         <Button DockPanel.Dock="Right" Content="Выйти" Command="{Binding LogoutCommand}" />
-        <TextBlock Text="{Binding UserInfo}" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding UserInfo}" VerticalAlignment="Center" Foreground="Black" />
       </DockPanel>
     </Border>
 
@@ -19,6 +19,30 @@
       </ListBox.ItemTemplate>
     </ListBox>
 
-    <ContentControl Content="{Binding SelectedPage}" />
+    <!-- Правая часть: панель поиска/сортировки, таблица, кнопки.
+         Привязки идут к текущей выбранной странице (SelectedPage). -->
+    <DockPanel Margin="10">
+
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+        <TextBlock Text="{Binding SelectedPage.Title}" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0" />
+        <TextBox Width="220" Watermark="Поиск..." Text="{Binding SelectedPage.SearchText}" />
+        <TextBlock Text="Сортировка:" VerticalAlignment="Center" />
+        <ComboBox Width="170"
+                  ItemsSource="{Binding SelectedPage.SortOptions}"
+                  SelectedItem="{Binding SelectedPage.SelectedSort}" />
+        <CheckBox Content="По убыванию" IsChecked="{Binding SelectedPage.Descending}" />
+      </StackPanel>
+
+      <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+        <Button Content="Добавить" Command="{Binding SelectedPage.AddCommand}" IsVisible="{Binding SelectedPage.CanAdd}" />
+        <Button Content="Изменить" Command="{Binding SelectedPage.EditCommand}" IsVisible="{Binding SelectedPage.CanEdit}" />
+        <Button Content="Удалить" Command="{Binding SelectedPage.DeleteCommand}" IsVisible="{Binding SelectedPage.CanDelete}" />
+        <Button Content="Обновить" Command="{Binding SelectedPage.RefreshCommand}" />
+        <TextBlock Text="{Binding SelectedPage.Status}" VerticalAlignment="Center" Margin="12,0,0,0" />
+      </StackPanel>
+
+      <!-- Сюда подставляется View выбранной таблицы (StudentsView, ExamsView, ...) с её DataGrid -->
+      <ContentControl Content="{Binding SelectedPage}" DoubleTapped="Grid_DoubleTapped" />
+    </DockPanel>
   </DockPanel>
 </UserControl>

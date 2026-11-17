@@ -1,0 +1,17 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="UniversityApp.Views.DepartmentsView">
+  <DataGrid ItemsSource="{Binding Items}"
+            SelectedItem="{Binding SelectedItem}"
+            AutoGenerateColumns="False"
+            IsReadOnly="True"
+            CanUserSortColumns="False"
+            GridLinesVisibility="All"
+            BorderThickness="1" BorderBrush="Gray">
+    <DataGrid.Columns>
+      <DataGridTextColumn Header="Шифр" Binding="{Binding Code}" Width="*" />
+      <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*" />
+      <DataGridTextColumn Header="Факультет" Binding="{Binding FacultyAbbr}" Width="*" />
+    </DataGrid.Columns>
+  </DataGrid>
+</UserControl>

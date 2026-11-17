@@ -171,3 +171,4 @@
 /home/lime/RiderProjects/UniversityApp/UniversityApp/obj/Debug/net8.0/UniversityApp.pdb
 /home/lime/RiderProjects/UniversityApp/UniversityApp/obj/Debug/net8.0/UniversityApp.genruntimeconfig.cache
 /home/lime/RiderProjects/UniversityApp/UniversityApp/obj/Debug/net8.0/ref/UniversityApp.dll
+/home/lime/RiderProjects/UniversityApp/UniversityApp/obj/Debug/net8.0/UniversityApp.sourcelink.json

@@ -1,20 +1,26 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:UniversityApp.ViewModels"
+             xmlns:views="using:UniversityApp.Views"
              x:Class="UniversityApp.App"
-             xmlns:local="using:UniversityApp"
-             xmlns:viewModels="clr-namespace:UniversityApp.ViewModels"
-             xmlns:views="clr-namespace:UniversityApp.Views"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Light">
 
-             <Application.DataTemplates>
-                 <DataTemplate DataType="viewModels:LoginViewModel"><views:LoginView /></DataTemplate>
-                 <DataTemplate DataType="viewModels:ShellViewModel"><views:ShellView /></DataTemplate>
-                 <DataTemplate DataType="viewModels:TablePageViewModel"><views:TablePageView /></DataTemplate>
-             </Application.DataTemplates>
+    <!-- Какой ViewModel каким View рисуется -->
+    <Application.DataTemplates>
+        <DataTemplate DataType="vm:LoginViewModel"><views:LoginView /></DataTemplate>
+        <DataTemplate DataType="vm:ShellViewModel"><views:ShellView /></DataTemplate>
 
-             <Application.Styles>
-                 <FluentTheme />
-                 <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-             </Application.Styles>
+        <DataTemplate DataType="vm:StudentsPageViewModel"><views:StudentsView /></DataTemplate>
+        <DataTemplate DataType="vm:ExamsPageViewModel"><views:ExamsView /></DataTemplate>
+        <DataTemplate DataType="vm:DepartmentsPageViewModel"><views:DepartmentsView /></DataTemplate>
+        <DataTemplate DataType="vm:DisciplinesPageViewModel"><views:DisciplinesView /></DataTemplate>
+        <DataTemplate DataType="vm:TeachersPageViewModel"><views:TeachersView /></DataTemplate>
+        <DataTemplate DataType="vm:HeadsPageViewModel"><views:HeadsView /></DataTemplate>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+    </Application.Styles>
+
 </Application>

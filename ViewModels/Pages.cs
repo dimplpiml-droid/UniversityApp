@@ -6,15 +6,10 @@ using UniversityApp.Models;
 
 namespace UniversityApp.ViewModels;
 
+// ===================== Студенты =====================
 public class StudentsPageViewModel : TablePageViewModel<Student>
 {
     public StudentsPageViewModel(bool canEdit) : base("Студенты", canEdit, canEdit, canEdit,
-        new()
-        {
-            new("Рег. номер", "RegNumber"),
-            new("Специальность", "SpecialtyNumber"),
-            new("Фамилия", "LastName")
-        },
         new()
         {
             ["Рег. номер"] = s => s.RegNumber,
@@ -70,15 +65,6 @@ public class ExamsPageViewModel : TablePageViewModel<Exam>
     // studentFilter — для студента показываем только его экзамены
     public ExamsPageViewModel(bool canAdd, bool canEdit, bool canDelete, bool onlyGrade, int? studentFilter)
         : base("Экзамены", canAdd, canEdit, canDelete,
-        new()
-        {
-            new("Дата", "DateText"),
-            new("Дисциплина", "DisciplineName"),
-            new("Студент", "StudentName"),
-            new("Преподаватель", "TeacherName"),
-            new("Аудитория", "Room"),
-            new("Оценка", "Grade")
-        },
         new()
         {
             ["Дата"] = e => e.ExamDate,
@@ -166,12 +152,6 @@ public class DepartmentsPageViewModel : TablePageViewModel<Department>
     public DepartmentsPageViewModel() : base("Кафедры", true, true, true,
         new()
         {
-            new("Шифр", "Code"),
-            new("Название", "Name"),
-            new("Факультет", "FacultyAbbr")
-        },
-        new()
-        {
             ["Шифр"] = d => d.Code,
             ["Название"] = d => d.Name,
             ["Факультет"] = d => d.FacultyAbbr
@@ -221,13 +201,6 @@ public class DisciplinesPageViewModel : TablePageViewModel<Discipline>
     public DisciplinesPageViewModel() : base("Дисциплины", false, false, false,
         new()
         {
-            new("Код", "Code"),
-            new("Название", "Name"),
-            new("Объём (часы)", "Hours"),
-            new("Кафедра", "DeptCode")
-        },
-        new()
-        {
             ["Код"] = d => d.Code,
             ["Название"] = d => d.Name,
             ["Объём (часы)"] = d => d.Hours,
@@ -252,15 +225,6 @@ public class DisciplinesPageViewModel : TablePageViewModel<Discipline>
 public class TeachersPageViewModel : TablePageViewModel<StaffRow>
 {
     public TeachersPageViewModel() : base("Преподаватели", true, true, true,
-        new()
-        {
-            new("Таб. №", "TabNumber"),
-            new("Фамилия", "LastName"),
-            new("Кафедра", "DeptCode"),
-            new("Зарплата", "Salary"),
-            new("Звание", "Rank"),
-            new("Степень", "Degree")
-        },
         new()
         {
             ["Таб. №"] = r => r.TabNumber,
@@ -351,14 +315,6 @@ public class TeachersPageViewModel : TablePageViewModel<StaffRow>
 public class HeadsPageViewModel : TablePageViewModel<StaffRow>
 {
     public HeadsPageViewModel() : base("Заведующие", true, true, true,
-        new()
-        {
-            new("Таб. №", "TabNumber"),
-            new("Фамилия", "LastName"),
-            new("Кафедра", "DeptCode"),
-            new("Зарплата", "Salary"),
-            new("Стаж (лет)", "Experience")
-        },
         new()
         {
             ["Таб. №"] = r => r.TabNumber,
