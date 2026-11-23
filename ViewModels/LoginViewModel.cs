@@ -21,6 +21,9 @@ public partial class LoginViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void Guest() => _onSuccess(new AppUser { Login = "guest", Role = Roles.Guest });
+
+    [RelayCommand]
     private void SignIn()
     {
         Error = "";
@@ -38,7 +41,7 @@ public partial class LoginViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            Error = "Баклажан: " + ErrorText.Of(ex);
+            Error = "Ошибка подключения к БД: " + ErrorText.Of(ex);
         }
     }
 }

@@ -10,12 +10,10 @@
         <DataTemplate DataType="vm:LoginViewModel"><views:LoginView /></DataTemplate>
         <DataTemplate DataType="vm:ShellViewModel"><views:ShellView /></DataTemplate>
 
-        <DataTemplate DataType="vm:StudentsPageViewModel"><views:StudentsView /></DataTemplate>
         <DataTemplate DataType="vm:ExamsPageViewModel"><views:ExamsView /></DataTemplate>
         <DataTemplate DataType="vm:DepartmentsPageViewModel"><views:DepartmentsView /></DataTemplate>
         <DataTemplate DataType="vm:DisciplinesPageViewModel"><views:DisciplinesView /></DataTemplate>
-        <DataTemplate DataType="vm:TeachersPageViewModel"><views:TeachersView /></DataTemplate>
-        <DataTemplate DataType="vm:HeadsPageViewModel"><views:HeadsView /></DataTemplate>
+        <DataTemplate DataType="vm:EmployeesPageViewModel"><views:EmployeesView /></DataTemplate>
     </Application.DataTemplates>
 
     <Application.Styles>

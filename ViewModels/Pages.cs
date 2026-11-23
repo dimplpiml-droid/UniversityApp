@@ -6,65 +6,13 @@ using UniversityApp.Models;
 
 namespace UniversityApp.ViewModels;
 
-// ===================== Студенты =====================
-public class StudentsPageViewModel : TablePageViewModel<Student>
-{
-    public StudentsPageViewModel(bool canEdit) : base("Студенты", canEdit, canEdit, canEdit,
-        new()
-        {
-            ["Рег. номер"] = s => s.RegNumber,
-            ["Специальность"] = s => s.SpecialtyNumber,
-            ["Фамилия"] = s => s.LastName
-        })
-    { }
 
-    protected override List<Student> LoadItems()
-    {
-        using var db = DbConection.Create();
-        return db.Set<Student>().AsNoTracking().ToList();
-    }
-
-    protected override string SearchStringOf(Student s) => $"{s.RegNumber} {s.SpecialtyNumber} {s.LastName}";
-
-    protected override List<Field> FieldsFor(Student? s)
-    {
-        using var db = DbConection.Create();
-        var specs = db.Set<Specialty>().OrderBy(x => x.Number).Select(x => x.Number + " — " + x.Direction).ToList();
-        return new()
-        {
-            Fields.Text("reg", "Рег. номер", s?.RegNumber.ToString(), readOnly: s != null),
-            Fields.Choice("spec", "Специальность", specs, s?.SpecialtyNumber),
-            Fields.Text("name", "Фамилия", s?.LastName)
-        };
-    }
-
-    protected override void SaveItem(Student? item, List<Field> f)
-    {
-        using var db = DbConection.Create();
-        var st = item == null ? new Student { RegNumber = f.Int("reg") } : db.Set<Student>().Find(item.RegNumber)!;
-        st.SpecialtyNumber = f.Str("spec");
-        st.LastName = f.FullStr("name");
-        if (item == null) db.Set<Student>().Add(st);
-        db.SaveChanges();
-    }
-
-    protected override void RemoveItem(Student item)
-    {
-        using var db = DbConection.Create();
-        db.Set<Student>().Where(x => x.RegNumber == item.RegNumber).ExecuteDelete();
-    }
-}
-
-// ===================== Экзамены =====================
 public class ExamsPageViewModel : TablePageViewModel<Exam>
 {
-    private readonly bool _onlyGrade;
-    private readonly int? _studentFilter;
+    private readonly int? _defaultTeacher;
 
-    // onlyGrade — преподаватель может менять только оценку
-    // studentFilter — для студента показываем только его экзамены
-    public ExamsPageViewModel(bool canAdd, bool canEdit, bool canDelete, bool onlyGrade, int? studentFilter)
-        : base("Экзамены", canAdd, canEdit, canDelete,
+    public ExamsPageViewModel(int? defaultTeacher)
+        : base("Экзамены", canAdd: true, canEdit: true, canDelete: false,
         new()
         {
             ["Дата"] = e => e.ExamDate,
@@ -72,10 +20,17 @@ public class ExamsPageViewModel : TablePageViewModel<Exam>
             ["Студент"] = e => e.StudentName,
             ["Преподаватель"] = e => e.TeacherName,
             ["Оценка"] = e => e.Grade
+        },
+        new()
+        {
+            Filter("Дисциплина", e => e.DisciplineName),
+            Filter("Преподаватель", e => e.TeacherName),
+            Filter("Оценка", e => e.Grade.ToString())
         })
     {
-        _onlyGrade = onlyGrade;
-        _studentFilter = studentFilter;
+        _defaultTeacher = defaultTeacher;
+        AddText = "Добавить студента в экзамен";
+        EditText = "Оценить";
     }
 
     protected override List<Exam> LoadItems()
@@ -85,11 +40,7 @@ public class ExamsPageViewModel : TablePageViewModel<Exam>
         var studs = db.Set<Student>().ToDictionary(s => s.RegNumber, s => s.LastName);
         var emps = db.Set<Employee>().ToDictionary(e => e.TabNumber, e => e.LastName);
 
-        IQueryable<Exam> q = db.Set<Exam>().AsNoTracking();
-        if (_studentFilter != null)
-            q = q.Where(e => e.StudentRegNumber == _studentFilter);
-
-        var list = q.ToList();
+        var list = db.Set<Exam>().AsNoTracking().ToList();
         foreach (var e in list)
         {
             e.DisciplineName = disc.GetValueOrDefault(e.DisciplineCode, "");
@@ -113,13 +64,14 @@ public class ExamsPageViewModel : TablePageViewModel<Exam>
                         select t.TabNumber + " — " + emp.LastName).ToList();
         var grades = new List<string> { "2", "3", "4", "5" };
 
-        bool ro = _onlyGrade; // преподаватель: всё, кроме оценки, только для чтения
+        // При оценивании (редактировании) менять можно только оценку
+        bool ro = e != null;
         return new()
         {
-            Fields.Text("date", "Дата (дд.мм.гггг)", e?.DateText, ro),
+            Fields.Text("date", "Дата (дд.мм.гггг)", e?.DateText ?? DateTime.Today.ToString("dd.MM.yyyy"), ro),
             Fields.Choice("disc", "Дисциплина", discs, e?.DisciplineCode.ToString(), ro),
             Fields.Choice("stud", "Студент", studs, e?.StudentRegNumber.ToString(), ro),
-            Fields.Choice("teach", "Преподаватель", teachers, e?.TeacherTabNumber.ToString(), ro),
+            Fields.Choice("teach", "Преподаватель", teachers, (e?.TeacherTabNumber ?? _defaultTeacher)?.ToString(), ro),
             Fields.Text("room", "Аудитория", e?.Room, ro),
             Fields.Choice("grade", "Оценка", grades, e?.Grade.ToString())
         };
@@ -139,22 +91,22 @@ public class ExamsPageViewModel : TablePageViewModel<Exam>
         db.SaveChanges();
     }
 
-    protected override void RemoveItem(Exam item)
-    {
-        using var db = DbConection.Create();
-        db.Set<Exam>().Where(x => x.Id == item.Id).ExecuteDelete();
-    }
+    protected override void RemoveItem(Exam item) { } 
 }
 
-// ===================== Кафедры =====================
+
 public class DepartmentsPageViewModel : TablePageViewModel<Department>
 {
-    public DepartmentsPageViewModel() : base("Кафедры", true, true, true,
+    public DepartmentsPageViewModel() : base("Кафедры", canAdd: true, canEdit: true, canDelete: false,
         new()
         {
             ["Шифр"] = d => d.Code,
             ["Название"] = d => d.Name,
             ["Факультет"] = d => d.FacultyAbbr
+        },
+        new()
+        {
+            Filter("Факультет", d => d.FacultyAbbr)
         })
     { }
 
@@ -188,23 +140,22 @@ public class DepartmentsPageViewModel : TablePageViewModel<Department>
         db.SaveChanges();
     }
 
-    protected override void RemoveItem(Department item)
-    {
-        using var db = DbConection.Create();
-        db.Set<Department>().Where(x => x.Code == item.Code).ExecuteDelete();
-    }
+    protected override void RemoveItem(Department item) { } 
 }
 
-// ===================== Дисциплины (только просмотр) =====================
 public class DisciplinesPageViewModel : TablePageViewModel<Discipline>
 {
-    public DisciplinesPageViewModel() : base("Дисциплины", false, false, false,
+    public DisciplinesPageViewModel() : base("Дисциплины", canAdd: false, canEdit: false, canDelete: false,
         new()
         {
             ["Код"] = d => d.Code,
             ["Название"] = d => d.Name,
             ["Объём (часы)"] = d => d.Hours,
             ["Кафедра"] = d => d.DeptCode
+        },
+        new()
+        {
+            Filter("Кафедра", d => d.DeptCode)
         })
     { }
 
@@ -221,170 +172,143 @@ public class DisciplinesPageViewModel : TablePageViewModel<Discipline>
     protected override void RemoveItem(Discipline item) { }
 }
 
-// ===================== Преподаватели (для админа) =====================
-public class TeachersPageViewModel : TablePageViewModel<StaffRow>
+
+
+public class EmployeesPageViewModel : TablePageViewModel<Employee>
 {
-    public TeachersPageViewModel() : base("Преподаватели", true, true, true,
+    public EmployeesPageViewModel() : base("Сотрудники", canAdd: true, canEdit: true, canDelete: true,
         new()
         {
-            ["Таб. №"] = r => r.TabNumber,
-            ["Фамилия"] = r => r.LastName,
-            ["Кафедра"] = r => r.DeptCode,
-            ["Зарплата"] = r => r.Salary,
-            ["Звание"] = r => r.Rank
+            ["Таб. №"] = e => e.TabNumber,
+            ["Фамилия"] = e => e.LastName,
+            ["Кафедра"] = e => e.DeptCode,
+            ["Должность"] = e => e.JobTitle,
+            ["Оклад"] = e => e.Salary
+        },
+        new()
+        {
+            Filter("Кафедра", e => e.DeptCode),
+            Filter("Должность", e => e.JobTitle)
         })
     { }
 
-    protected override List<StaffRow> LoadItems()
+    protected override List<Employee> LoadItems()
     {
         using var db = DbConection.Create();
-        return (from e in db.Set<Employee>()
-                join t in db.Set<Teacher>() on e.TabNumber equals t.TabNumber
-                where e.JobTitle == JobTitles.Teacher
-                select new StaffRow
-                {
-                    TabNumber = e.TabNumber,
-                    LastName = e.LastName,
-                    DeptCode = e.DeptCode,
-                    Salary = e.Salary,
-                    Rank = t.AcademicRank,
-                    Degree = t.AcademicDegree
-                }).ToList();
+        return db.Set<Employee>().AsNoTracking().ToList();
     }
 
-    protected override string SearchStringOf(StaffRow r)
-        => $"{r.TabNumber} {r.LastName} {r.DeptCode} {r.Salary} {r.Rank} {r.Degree}";
+    protected override string SearchStringOf(Employee e)
+        => $"{e.TabNumber} {e.LastName} {e.DeptCode} {e.JobTitle} {e.Salary}";
 
-    protected override List<Field> FieldsFor(StaffRow? r)
+    protected override List<Field> FieldsFor(Employee? e)
     {
         using var db = DbConection.Create();
         var depts = db.Set<Department>().OrderBy(d => d.Code).Select(d => d.Code + " — " + d.Name).ToList();
+        var jobs = new List<string> { JobTitles.Head, JobTitles.Teacher, JobTitles.Engineer };
+
+        string extra = "";
+        if (e != null)
+        {
+            extra = e.JobTitle switch
+            {
+                JobTitles.Teacher => db.Set<Teacher>().Where(t => t.TabNumber == e.TabNumber)
+                                        .Select(t => t.AcademicRank).FirstOrDefault() ?? "",
+                JobTitles.Head => db.Set<DepartmentHead>().Where(h => h.TabNumber == e.TabNumber)
+                                        .Select(h => (int?)h.Experience).FirstOrDefault()?.ToString() ?? "",
+                JobTitles.Engineer => db.Set<Engineer>().Where(g => g.TabNumber == e.TabNumber)
+                                        .Select(g => g.Profession).FirstOrDefault() ?? "",
+                _ => ""
+            };
+        }
+
         return new()
         {
-            Fields.Text("tab", "Табельный номер", r?.TabNumber.ToString(), readOnly: r != null),
-            Fields.Text("name", "Фамилия", r?.LastName),
-            Fields.Choice("dept", "Кафедра", depts, r?.DeptCode),
-            Fields.Text("salary", "Зарплата", r?.Salary.ToString("0.##")),
-            Fields.Text("rank", "Звание", r?.Rank),
-            Fields.Text("degree", "Степень (необязательно)", r?.Degree)
+            Fields.Text("tab", "Табельный номер", e?.TabNumber.ToString(), readOnly: e != null),
+            Fields.Text("name", "Фамилия", e?.LastName),
+            Fields.Choice("dept", "Кафедра", depts, e?.DeptCode),
+            Fields.Choice("job", "Должность", jobs, e?.JobTitle),
+            Fields.Text("salary", "Оклад", e?.Salary.ToString("0.##")),
+            Fields.Text("extra", "Звание (преподаватель) / стаж в годах (заведующий) / специальность (инженер)", extra),
+            Fields.Text("boss", "Табельный номер руководителя (необязательно)", e?.BossTabNumber?.ToString())
         };
     }
 
-    protected override void SaveItem(StaffRow? item, List<Field> f)
+    protected override void SaveItem(Employee? item, List<Field> f)
     {
         using var db = DbConection.Create();
-        var dept = f.Str("dept");
 
+        int tab = item?.TabNumber ?? f.Int("tab");
+        string dept = f.Str("dept");
+        string job = f.Str("job");
+        string name = f.FullStr("name");
+        decimal salary = f.Dec("salary");
+        int? boss = f.IntOrNull("boss");
+
+        string? extra = f.StrOrNull("extra");
+        int experience = 0;
+        if (job == JobTitles.Teacher && extra == null) throw new Exception("Для преподавателя укажите звание");
+        if (job == JobTitles.Engineer && extra == null) throw new Exception("Для инженера укажите специальность");
+        if (job == JobTitles.Head && !int.TryParse(extra, out experience))
+            throw new Exception("Для заведующего укажите стаж (целое число лет)");
+
+        // Начальник по умолчанию: заведующий - сам себе, остальные - заведующий своей кафедры
+        boss ??= job == JobTitles.Head
+            ? tab
+            : db.Set<Employee>().Where(x => x.DeptCode == dept && x.JobTitle == JobTitles.Head)
+                                .Select(x => (int?)x.TabNumber).FirstOrDefault();
+
+        Employee emp;
         if (item == null)
         {
-            int tab = f.Int("tab");
-            // начальник нового преподавателя — заведующий его кафедры (если есть)
-            int? boss = db.Set<Employee>()
-                .Where(e => e.DeptCode == dept && e.JobTitle == JobTitles.Head)
-                .Select(e => (int?)e.TabNumber).FirstOrDefault();
-
-            db.Set<Employee>().Add(new Employee
-            {
-                TabNumber = tab, DeptCode = dept, LastName = f.FullStr("name"),
-                JobTitle = JobTitles.Teacher, Salary = f.Dec("salary"), BossTabNumber = boss
-            });
-            db.Set<Teacher>().Add(new Teacher { TabNumber = tab, AcademicRank = f.FullStr("rank"), AcademicDegree = f.StrOrNull("degree") });
+            emp = new Employee { TabNumber = tab };
+            db.Set<Employee>().Add(emp);
         }
         else
         {
-            var emp = db.Set<Employee>().Find(item.TabNumber)!;
-            emp.DeptCode = dept;
-            emp.LastName = f.FullStr("name");
-            emp.Salary = f.Dec("salary");
-            var t = db.Set<Teacher>().Find(item.TabNumber)!;
-            t.AcademicRank = f.FullStr("rank");
-            t.AcademicDegree = f.StrOrNull("degree");
+            emp = db.Set<Employee>().Find(tab)!;
         }
-        db.SaveChanges();
-    }
+        emp.DeptCode = dept;
+        emp.LastName = name;
+        emp.JobTitle = job;
+        emp.Salary = salary;
+        emp.BossTabNumber = boss;
 
-    protected override void RemoveItem(StaffRow item)
-    {
-        using var db = DbConection.Create();
-        // строки teacher и app_user удалятся каскадом
-        db.Set<Employee>().Where(e => e.TabNumber == item.TabNumber).ExecuteDelete();
-    }
-}
-
-// ===================== Заведующие кафедрами (для админа) =====================
-public class HeadsPageViewModel : TablePageViewModel<StaffRow>
-{
-    public HeadsPageViewModel() : base("Заведующие", true, true, true,
-        new()
+        // При смене должности убираем запись прежней категории
+        if (item != null && item.JobTitle != job)
         {
-            ["Таб. №"] = r => r.TabNumber,
-            ["Фамилия"] = r => r.LastName,
-            ["Кафедра"] = r => r.DeptCode,
-            ["Зарплата"] = r => r.Salary,
-            ["Стаж (лет)"] = r => r.Experience
-        })
-    { }
+            if (item.JobTitle == JobTitles.Teacher && db.Set<Teacher>().Find(tab) is { } oldT) db.Remove(oldT);
+            if (item.JobTitle == JobTitles.Head && db.Set<DepartmentHead>().Find(tab) is { } oldH) db.Remove(oldH);
+            if (item.JobTitle == JobTitles.Engineer && db.Set<Engineer>().Find(tab) is { } oldE) db.Remove(oldE);
+        }
 
-    protected override List<StaffRow> LoadItems()
-    {
-        using var db = DbConection.Create();
-        return (from e in db.Set<Employee>()
-                join h in db.Set<DepartmentHead>() on e.TabNumber equals h.TabNumber
-                select new StaffRow
-                {
-                    TabNumber = e.TabNumber,
-                    LastName = e.LastName,
-                    DeptCode = e.DeptCode,
-                    Salary = e.Salary,
-                    Experience = h.Experience
-                }).ToList();
-    }
-
-    protected override string SearchStringOf(StaffRow r)
-        => $"{r.TabNumber} {r.LastName} {r.DeptCode} {r.Salary} {r.Experience}";
-
-    protected override List<Field> FieldsFor(StaffRow? r)
-    {
-        using var db = DbConection.Create();
-        var depts = db.Set<Department>().OrderBy(d => d.Code).Select(d => d.Code + " — " + d.Name).ToList();
-        return new()
+        // Запись новой (или прежней) категории: добавляем или обновляем
+        if (job == JobTitles.Teacher)
         {
-            Fields.Text("tab", "Табельный номер", r?.TabNumber.ToString(), readOnly: r != null),
-            Fields.Text("name", "Фамилия", r?.LastName),
-            Fields.Choice("dept", "Кафедра", depts, r?.DeptCode),
-            Fields.Text("salary", "Зарплата", r?.Salary.ToString("0.##")),
-            Fields.Text("exp", "Стаж (лет)", r?.Experience.ToString())
-        };
-    }
-
-    protected override void SaveItem(StaffRow? item, List<Field> f)
-    {
-        using var db = DbConection.Create();
-        if (item == null)
+            var t = db.Set<Teacher>().Find(tab);
+            if (t == null) db.Set<Teacher>().Add(new Teacher { TabNumber = tab, AcademicRank = extra! });
+            else t.AcademicRank = extra!;
+        }
+        else if (job == JobTitles.Head)
         {
-            int tab = f.Int("tab");
-            // заведующий — сам себе начальник (как в исходных данных)
-            db.Set<Employee>().Add(new Employee
-            {
-                TabNumber = tab, DeptCode = f.Str("dept"), LastName = f.FullStr("name"),
-                JobTitle = JobTitles.Head, Salary = f.Dec("salary"), BossTabNumber = tab
-            });
-            db.Set<DepartmentHead>().Add(new DepartmentHead { TabNumber = tab, Experience = f.Int("exp") });
+            var h = db.Set<DepartmentHead>().Find(tab);
+            if (h == null) db.Set<DepartmentHead>().Add(new DepartmentHead { TabNumber = tab, Experience = experience });
+            else h.Experience = experience;
         }
         else
         {
-            var emp = db.Set<Employee>().Find(item.TabNumber)!;
-            emp.DeptCode = f.Str("dept");
-            emp.LastName = f.FullStr("name");
-            emp.Salary = f.Dec("salary");
-            db.Set<DepartmentHead>().Find(item.TabNumber)!.Experience = f.Int("exp");
+            var g = db.Set<Engineer>().Find(tab);
+            if (g == null) db.Set<Engineer>().Add(new Engineer { TabNumber = tab, Profession = extra! });
+            else g.Profession = extra!;
         }
+
         db.SaveChanges();
     }
 
-    protected override void RemoveItem(StaffRow item)
+    protected override void RemoveItem(Employee item)
     {
         using var db = DbConection.Create();
+        // строки teacher / engineer / department_head и учётная запись удалятся каскадом
         db.Set<Employee>().Where(e => e.TabNumber == item.TabNumber).ExecuteDelete();
     }
 }

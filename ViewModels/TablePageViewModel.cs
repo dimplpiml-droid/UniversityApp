@@ -10,18 +10,22 @@ using UniversityApp.Services;
 
 namespace UniversityApp.ViewModels;
 
-// Общая логика любой страницы с таблицей: поиск, сортировка, добавление, правка, удаление.
 public abstract partial class TablePageViewModel : ViewModelBase
 {
     private readonly Dictionary<string, Func<object, object>> _sorts;
     private List<object> _all = new();
     private string? _loadError;
+    private bool _refreshingFilters;
 
     public string Title { get; }
     public bool CanAdd { get; }
     public bool CanEdit { get; }
     public bool CanDelete { get; }
     public List<string> SortOptions { get; }
+    public List<FilterViewModel> Filters { get; }
+
+    public string AddText { get; protected set; } = "Добавить";
+    public string EditText { get; protected set; } = "Изменить";
     public ObservableCollection<object> Items { get; } = new();
 
     [ObservableProperty] private string _searchText = "";
@@ -31,7 +35,7 @@ public abstract partial class TablePageViewModel : ViewModelBase
     [ObservableProperty] private string _status = "";
 
     protected TablePageViewModel(string title, bool canAdd, bool canEdit, bool canDelete,
-        Dictionary<string, Func<object, object>> sorts)
+        Dictionary<string, Func<object, object>> sorts, List<FilterViewModel> filters)
     {
         Title = title;
         CanAdd = canAdd;
@@ -39,23 +43,29 @@ public abstract partial class TablePageViewModel : ViewModelBase
         CanDelete = canDelete;
         _sorts = sorts;
         SortOptions = sorts.Keys.ToList();
+        Filters = filters;
+        foreach (var f in Filters)
+            f.Changed += () => { if (!_refreshingFilters) Apply(); };
         SelectedSort = SortOptions.FirstOrDefault();
     }
 
-    // ---- то, что реализует конкретная страница ----
     protected abstract IEnumerable<object> LoadAll();
     protected abstract string SearchString(object item);
     protected abstract List<Field> BuildFields(object? item);
     protected abstract void Save(object? item, List<Field> fields);
     protected abstract void DeleteItem(object item);
 
-    // ---- загрузка / фильтр / сортировка ----
     public void Reload()
     {
         try
         {
             _all = LoadAll().ToList();
             _loadError = null;
+
+            // варианты в списках фильтров берутся из загруженных данных
+            _refreshingFilters = true;
+            foreach (var f in Filters) f.Refresh(_all);
+            _refreshingFilters = false;
         }
         catch (Exception ex)
         {
@@ -73,6 +83,14 @@ public abstract partial class TablePageViewModel : ViewModelBase
     {
         IEnumerable<object> q = _all;
 
+        // Фильтры и поиск работают одновременно: запись должна пройти все условия
+        foreach (var f in Filters)
+        {
+            var value = f.Selected;
+            if (!string.IsNullOrEmpty(value) && value != FilterViewModel.All)
+                q = q.Where(o => f.Key(o) == value);
+        }
+
         var s = SearchText?.Trim().ToLower();
         if (!string.IsNullOrEmpty(s))
             q = q.Where(o => SearchString(o).ToLower().Contains(s));
@@ -86,7 +104,6 @@ public abstract partial class TablePageViewModel : ViewModelBase
         Status = _loadError ?? $"Записей: {Items.Count}";
     }
 
-    // ---- команды ----
     [RelayCommand]
     private async Task Add()
     {
@@ -136,7 +153,13 @@ public abstract partial class TablePageViewModel : ViewModelBase
     [RelayCommand]
     private void Refresh() => Reload();
 
-    // Показываем окно; если сохранить не получилось — показываем ошибку и открываем окно снова с теми же данными
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        SearchText = "";
+        foreach (var f in Filters) f.Selected = FilterViewModel.All;
+    }
+
     private static async Task<bool> EditLoop(string title, List<Field> fields, Action save)
     {
         while (true)
@@ -155,14 +178,16 @@ public abstract partial class TablePageViewModel : ViewModelBase
     }
 }
 
-// Типизированная обёртка, чтобы в страницах не приводить object вручную
 public abstract class TablePageViewModel<T> : TablePageViewModel where T : class
 {
     protected TablePageViewModel(string title, bool canAdd, bool canEdit, bool canDelete,
-        Dictionary<string, Func<T, object>> sorts)
-        : base(title, canAdd, canEdit, canDelete, ConvertSorts(sorts))
+        Dictionary<string, Func<T, object>> sorts, List<FilterViewModel> filters)
+        : base(title, canAdd, canEdit, canDelete, ConvertSorts(sorts), filters)
     {
     }
+
+    protected static FilterViewModel Filter(string label, Func<T, string> key)
+        => new(label, o => key((T)o));
 
     private static Dictionary<string, Func<object, object>> ConvertSorts(Dictionary<string, Func<T, object>> sorts)
         => sorts.ToDictionary(kv => kv.Key, kv => (Func<object, object>)(o => kv.Value((T)o)));

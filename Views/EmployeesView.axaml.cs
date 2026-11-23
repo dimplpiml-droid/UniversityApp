@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace UniversityApp.Views;
 
-public partial class TeachersView : UserControl
+public partial class EmployeesView : UserControl
 {
-    public TeachersView()
+    public EmployeesView()
     {
         InitializeComponent();
     }

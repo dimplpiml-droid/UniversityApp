@@ -13,7 +13,6 @@ public partial class ShellView : UserControl
         InitializeComponent();
     }
 
-    // Двойной щелчок по строке таблицы = редактирование (если у роли есть такое право)
     private void Grid_DoubleTapped(object? sender, TappedEventArgs e)
     {
         var onRow = (e.Source as Visual)?.FindAncestorOfType<DataGridRow>() != null;

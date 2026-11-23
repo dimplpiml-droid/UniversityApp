@@ -73,6 +73,15 @@ public static class Fields
         return n;
     }
 
+    public static int? IntOrNull(this List<Field> f, string key)
+    {
+        var v = f.StrOrNull(key);
+        if (v == null) return null;
+        if (!int.TryParse(v, out var n))
+            throw new Exception($"Поле «{f.Get(key).Label}» должно быть целым числом");
+        return n;
+    }
+
     public static decimal Dec(this List<Field> f, string key)
     {
         var s = f.Str(key).Replace(',', '.');

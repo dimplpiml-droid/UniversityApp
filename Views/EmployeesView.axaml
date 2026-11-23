@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="UniversityApp.Views.TeachersView">
+             x:Class="UniversityApp.Views.EmployeesView">
   <DataGrid ItemsSource="{Binding Items}"
             SelectedItem="{Binding SelectedItem}"
             AutoGenerateColumns="False"
@@ -12,9 +12,9 @@
       <DataGridTextColumn Header="Таб. №" Binding="{Binding TabNumber}" Width="*" />
       <DataGridTextColumn Header="Фамилия" Binding="{Binding LastName}" Width="*" />
       <DataGridTextColumn Header="Кафедра" Binding="{Binding DeptCode}" Width="*" />
-      <DataGridTextColumn Header="Зарплата" Binding="{Binding Salary}" Width="*" />
-      <DataGridTextColumn Header="Звание" Binding="{Binding Rank}" Width="*" />
-      <DataGridTextColumn Header="Степень" Binding="{Binding Degree}" Width="*" />
+      <DataGridTextColumn Header="Должность" Binding="{Binding JobTitle}" Width="*" />
+      <DataGridTextColumn Header="Оклад" Binding="{Binding Salary}" Width="*" />
+      <DataGridTextColumn Header="Руководитель" Binding="{Binding BossTabNumber}" Width="*" />
     </DataGrid.Columns>
   </DataGrid>
 </UserControl>
